@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -7,109 +9,347 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowCheckedModeBanner: false,
+      home: const CardScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class CardScreen extends StatefulWidget {
+  const CardScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<CardScreen> createState() => _CardScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _CardScreenState extends State<CardScreen>
+    with SingleTickerProviderStateMixin {
+  Offset mousePos = const Offset(0, 0);
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  late final AnimationController _controller = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 500));
+
+  late Animation<Offset> _animation =
+      Tween<Offset>(begin: mousePos, end: const Offset(0, 0))
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
+    double cardWidth = 540;
+    double cardHeight = 300;
+
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        backgroundColor: const Color(0xFFFEF3F6),
+        body: Stack(
+          children: [
+            //Shadow
+            Positioned(
+                top: h * .1,
+                right: w * .9,
+                child: Container(
+                  decoration: const BoxDecoration(boxShadow: [
+                    BoxShadow(
+                      blurRadius: 800,
+                      spreadRadius: 350,
+                      color: Color(0xFFFED2A6),
+                    )
+                  ]),
+                )),
+
+            //Shadow
+            Positioned(
+                top: h * .1,
+                right: w * .1,
+                child: Container(
+                  decoration: const BoxDecoration(boxShadow: [
+                    BoxShadow(
+                      blurRadius: 1600,
+                      spreadRadius: 400,
+                      color: Color(0xFFEF7FE6),
+                    )
+                  ]),
+                )),
+
+            //Sphere
+            Positioned(
+                top: (h * .5) - 190,
+                left: (w * .5) + 120,
+                child: Transform(
+                  transform: Matrix4.identity()
+                    ..translate(
+                        (mousePos.dx / 15) / 6, (mousePos.dy / 15) / 6, 0.0),
+                  child: _buildSphere(
+                    100,
+                  ),
+                )),
+
+            //Sphere
+            Positioned(
+              top: (h * .5) - 180,
+              left: (w * .5) - (cardWidth / 2) - 85,
+              child: _buildSphere(
+                150,
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+
+            //The Card
+            Positioned.fill(
+              child: Center(
+                child: MouseRegion(
+                  onEnter: (event) {
+                    // mousePos = event.position;
+                    if (_controller.isAnimating) {
+                      _controller.stop();
+                      Offset temp = event.delta;
+                      mousePos =
+                          Offset(mousePos.dx + temp.dx, mousePos.dy + temp.dy);
+                    }
+                  },
+                  onHover: (mData) {
+                    setState(() {
+                      Offset temp = mData.delta;
+                      mousePos =
+                          Offset(mousePos.dx + temp.dx, mousePos.dy + temp.dy);
+                    });
+                  },
+                  onExit: (mData) {
+                    // print(mousePos);
+
+                    _animation =
+                        Tween<Offset>(begin: mousePos, end: const Offset(0, 0))
+                            .animate(CurvedAnimation(
+                                parent: _controller, curve: Curves.easeIn));
+
+                    _controller.forward(from: 0);
+                  },
+                  child: AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, ch) {
+                      // mousePos = _animation.value;
+                      print('_animation.value');
+                      print(_animation.value);
+                      print(mousePos);
+                      _setMousePos();
+
+                      return Transform(
+                        transform: Matrix4.identity()
+                          ..setEntry(3, 2, .001)
+                          ..rotateX((mousePos.dy) / 500)
+                          ..rotateY((-mousePos.dx) / 5000),
+                        alignment: Alignment.center,
+                        child: ch,
+                      );
+                    },
+                    child: _buildCard(cardHeight, cardWidth),
+                  ),
+                ),
+              ),
             ),
+
+            //Sphere
+            Positioned(
+                top: (h * .5) - 100,
+                left: (w * .5) + (cardWidth / 2) - 63,
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, ch) {
+                    return Transform(
+                      transform: Matrix4.identity()
+                        ..translate(
+                          mousePos.dx / 15,
+                          mousePos.dy / 15,
+                          0.0,
+                        ),
+                      child: ch,
+                    );
+                  },
+                  child: _buildSphere(
+                    200,
+                  ),
+                )),
+
+            //Sphere
+            Positioned(
+                top: (h * .5) - 100,
+                left: (w * .5) + (cardWidth / 2) - 63,
+                child: Transform(
+                  transform: Matrix4.identity()
+                    ..translate(
+                      -(mousePos.dx / 15) * 2,
+                      -(mousePos.dy / 15) * 2,
+                      0.0,
+                    ),
+                  child: _buildSphere(50, withBoxShodow: true),
+                )),
           ],
+        ));
+  }
+
+  void _setMousePos() {
+    if (_controller.isAnimating) {
+      mousePos = _animation.value;
+    }
+  }
+
+  ClipRRect _buildCard(double cardHeight, double cardWidth) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          height: cardHeight,
+          width: cardWidth,
+          // transform: Matrix4.identity(),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withOpacity(.2),
+              border: Border.all(width: .5, color: Colors.white)),
+          child: Column(children: [
+            Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox.expand(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'GLASS BANK',
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 216, 123, 211),
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text('5423  1243  2457  7354',
+                              style: TextStyle(
+                                  letterSpacing: 2,
+                                  color: Colors.black,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold))
+                        ]),
+                  ),
+                )),
+            Expanded(
+              flex: 3,
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontSize: 11),
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                        Color(0xFF4D2DF6),
+                        Color(0xFF4D2DF6),
+                        Color(0xFF4D2DF6),
+                        Color.fromARGB(255, 190, 42, 183),
+                        Color.fromARGB(255, 241, 8, 230),
+                      ])),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(children: [
+                            const Text(
+                              'VALID THRU',
+                            ),
+                            _verticalSpace(5),
+                            const Text('12/25')
+                          ]),
+                          const Text(
+                            'TARIQ ZIYAD',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                fontSize: 17),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      right: 23,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: _buildSphere(50, opacity: .6),
+                      ),
+                    ),
+                    Positioned(
+                      right: 63,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: _buildSphere(30, opacity: .4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ]),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  Container _buildSphere(
+    double height2, {
+    double opacity = 1,
+    bool withBoxShodow = false,
+  }) {
+    return Container(
+      height: height2,
+      width: height2,
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.bottomRight,
+              end: Alignment.topLeft,
+              colors: [
+                // Color(0xFFF644F8).withOpacity(opacity),
+                // Color(0xFFFF74FF).withOpacity(opacity),
+                // Color(0xFFFF74FF).withOpacity(opacity),
+                const Color.fromARGB(255, 255, 141, 255).withOpacity(opacity),
+                const Color.fromARGB(255, 255, 141, 255).withOpacity(opacity),
+                const Color(0xFFFDB6FF).withOpacity(opacity),
+                const Color.fromARGB(255, 254, 211, 255).withOpacity(opacity),
+                const Color.fromARGB(255, 250, 236, 250).withOpacity(opacity),
+                const Color(0xFFFFFFFF).withOpacity(opacity),
+                const Color(0xFFFFFFFF).withOpacity(opacity),
+
+                // Color(0xFFFFFFFF).withOpacity(opacity),
+              ]),
+          borderRadius: BorderRadius.circular(height2),
+          boxShadow: withBoxShodow
+              ? [
+                  BoxShadow(
+                    blurRadius: 12,
+                    spreadRadius: 3,
+                    offset: const Offset(12, 20),
+                    color: Colors.grey.withOpacity(.2),
+                  )
+                ]
+              : null),
+    );
+  }
+
+  _verticalSpace(double height) => SizedBox(
+        height: height,
+      );
 }
