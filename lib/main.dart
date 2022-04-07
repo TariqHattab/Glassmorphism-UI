@@ -36,7 +36,7 @@ class _CardScreenState extends State<CardScreen>
   Offset mousePos = const Offset(0, 0);
 
   late final AnimationController _controller = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this, duration: const Duration(milliseconds: 200));
 
   late Animation<Offset> _animation =
       Tween<Offset>(begin: mousePos, end: const Offset(0, 0))
@@ -50,156 +50,137 @@ class _CardScreenState extends State<CardScreen>
     double cardHeight = 300;
 
     return Scaffold(
-        backgroundColor: const Color(0xFFFEF3F6),
-        body: Stack(
-          children: [
-            //Shadow
-            Positioned(
-                top: h * .1,
-                right: w * .9,
-                child: Container(
-                  decoration: const BoxDecoration(boxShadow: [
-                    BoxShadow(
-                      blurRadius: 800,
-                      spreadRadius: 350,
-                      color: Color(0xFFFED2A6),
-                    )
-                  ]),
-                )),
+      backgroundColor: const Color(0xFFFEF3F6),
+      body: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, ch) {
+          if (_controller.isAnimating) {
+            mousePos = _animation.value;
+          }
+          var y = mousePos.dy / 15;
+          var x = mousePos.dx / 15;
+          return Stack(
+            children: [
+              //Shadow
+              Positioned(
+                  top: h * .1,
+                  right: w * .9,
+                  child: Container(
+                    decoration: const BoxDecoration(boxShadow: [
+                      BoxShadow(
+                        blurRadius: 800,
+                        spreadRadius: 350,
+                        color: Color(0xFFFED2A6),
+                      )
+                    ]),
+                  )),
 
-            //Shadow
-            Positioned(
-                top: h * .1,
-                right: w * .1,
-                child: Container(
-                  decoration: const BoxDecoration(boxShadow: [
-                    BoxShadow(
-                      blurRadius: 1600,
-                      spreadRadius: 400,
-                      color: Color(0xFFEF7FE6),
-                    )
-                  ]),
-                )),
+              //Shadow
+              Positioned(
+                  top: h * .1,
+                  right: w * .1,
+                  child: Container(
+                    decoration: const BoxDecoration(boxShadow: [
+                      BoxShadow(
+                        blurRadius: 1600,
+                        spreadRadius: 400,
+                        color: Color(0xFFEF7FE6),
+                      )
+                    ]),
+                  )),
 
-            //Sphere
-            Positioned(
-                top: (h * .5) - 190,
-                left: (w * .5) + 120,
-                child: Transform(
-                  transform: Matrix4.identity()
-                    ..translate(
-                        (mousePos.dx / 15) / 6, (mousePos.dy / 15) / 6, 0.0),
-                  child: _buildSphere(
-                    100,
-                  ),
-                )),
+              //Sphere
+              Positioned(
+                  top: (h * .5) - 190,
+                  left: (w * .5) + 120,
+                  child: Transform(
+                    transform: Matrix4.identity()
+                      ..translate(-x / 3, -y / 3, 0.0),
+                    child: _buildSphere(
+                      100,
+                    ),
+                  )),
 
-            //Sphere
-            Positioned(
-              top: (h * .5) - 180,
-              left: (w * .5) - (cardWidth / 2) - 85,
-              child: _buildSphere(
-                150,
-              ),
-            ),
+              //Sphere
+              Positioned(
+                  top: (h * .5) - 180,
+                  left: (w * .5) - (cardWidth / 2) - 85,
+                  child: Transform(
+                    transform: Matrix4.identity()
+                      ..translate(-x * .75, -y * .75, 0.0),
+                    child: _buildSphere(
+                      150,
+                    ),
+                  )),
 
-            //The Card
-            Positioned.fill(
-              child: Center(
-                child: MouseRegion(
-                  onEnter: (event) {
-                    // mousePos = event.position;
-                    if (_controller.isAnimating) {
-                      _controller.stop();
-                      Offset temp = event.delta;
-                      mousePos =
-                          Offset(mousePos.dx + temp.dx, mousePos.dy + temp.dy);
-                    }
-                  },
-                  onHover: (mData) {
-                    setState(() {
-                      Offset temp = mData.delta;
-                      mousePos =
-                          Offset(mousePos.dx + temp.dx, mousePos.dy + temp.dy);
-                    });
-                  },
-                  onExit: (mData) {
-                    // print(mousePos);
-
-                    _animation =
-                        Tween<Offset>(begin: mousePos, end: const Offset(0, 0))
-                            .animate(CurvedAnimation(
-                                parent: _controller, curve: Curves.easeIn));
-
-                    _controller.forward(from: 0);
-                  },
-                  child: AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, ch) {
-                      // mousePos = _animation.value;
-                      print('_animation.value');
-                      print(_animation.value);
-                      print(mousePos);
-                      _setMousePos();
-
-                      return Transform(
-                        transform: Matrix4.identity()
-                          ..setEntry(3, 2, .001)
-                          ..rotateX((mousePos.dy) / 500)
-                          ..rotateY((-mousePos.dx) / 5000),
-                        alignment: Alignment.center,
-                        child: ch,
-                      );
+              //The Card
+              Positioned.fill(
+                child: Center(
+                  child: MouseRegion(
+                    onEnter: (event) {
+                      // mousePos = event.position;
+                      if (_controller.isAnimating) {
+                        _controller.stop();
+                        _controller.animateTo(1);
+                        Offset temp = event.delta;
+                        mousePos = Offset(
+                            mousePos.dx + temp.dx, mousePos.dy + temp.dy);
+                      }
                     },
-                    child: _buildCard(cardHeight, cardWidth),
+                    onHover: (mData) {
+                      setState(() {
+                        Offset temp = mData.delta;
+                        mousePos = Offset(
+                            mousePos.dx + temp.dx, mousePos.dy + temp.dy);
+                      });
+                    },
+                    onExit: (mData) {
+                      // print(mousePos);
+
+                      _animation = Tween<Offset>(
+                              begin: mousePos, end: const Offset(0, 0))
+                          .animate(CurvedAnimation(
+                              parent: _controller, curve: Curves.easeIn));
+
+                      _controller.forward(from: 0);
+                    },
+                    child: Transform(
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, .001)
+                        ..rotateX((mousePos.dy) / 1000)
+                        ..rotateY((-mousePos.dx) / 5000),
+                      alignment: Alignment.center,
+                      child: ch,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            //Sphere
-            Positioned(
-                top: (h * .5) - 100,
-                left: (w * .5) + (cardWidth / 2) - 63,
-                child: AnimatedBuilder(
-                  animation: _animation,
-                  builder: (context, ch) {
-                    return Transform(
-                      transform: Matrix4.identity()
-                        ..translate(
-                          mousePos.dx / 15,
-                          mousePos.dy / 15,
-                          0.0,
-                        ),
-                      child: ch,
-                    );
-                  },
-                  child: _buildSphere(
-                    200,
-                  ),
-                )),
-
-            //Sphere
-            Positioned(
-                top: (h * .5) - 100,
-                left: (w * .5) + (cardWidth / 2) - 63,
-                child: Transform(
-                  transform: Matrix4.identity()
-                    ..translate(
-                      -(mousePos.dx / 15) * 2,
-                      -(mousePos.dy / 15) * 2,
-                      0.0,
+              //Sphere
+              Positioned(
+                  top: (h * .5) - 100,
+                  left: (w * .5) + (cardWidth / 2) - 63,
+                  child: Transform(
+                    transform: Matrix4.identity()..translate(x, y, 0.0),
+                    child: _buildSphere(
+                      200,
                     ),
-                  child: _buildSphere(50, withBoxShodow: true),
-                )),
-          ],
-        ));
-  }
+                  )),
 
-  void _setMousePos() {
-    if (_controller.isAnimating) {
-      mousePos = _animation.value;
-    }
+              //Sphere
+              Positioned(
+                  top: (h * .5) - 130,
+                  left: (w * .5) + (cardWidth / 2) - 63,
+                  child: Transform(
+                    transform: Matrix4.identity()..translate(x / 3, y / 3, 0.0),
+                    child: _buildSphere(50, withBoxShodow: true),
+                  )),
+            ],
+          );
+        },
+        child: _buildCard(cardHeight, cardWidth),
+      ),
+    );
   }
 
   ClipRRect _buildCard(double cardHeight, double cardWidth) {
